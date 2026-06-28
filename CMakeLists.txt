@@ -12,8 +12,11 @@ find_package(Pulp CONFIG REQUIRED)
 option(PULP_BUILD_TESTS "Build the analyzer tests" ON)
 enable_testing()
 
-# Layer 1: the pure analysis engine (built + tested today).
+# Layers 1-2 + persistent state: pure, headless-tested.
 add_subdirectory(engine)
 
-# Layers 2-4 (diff model, RT publication, GPU UI) and the cross-instance plugin
-# shell land here as they are implemented — see README.md and ROADMAP.md.
+# Layer 4 (screenshot-testable spectrum panel) — Skia raster baselines.
+add_subdirectory(ui)
+
+# Layer 3 (RT publication) and the cross-instance registry / plugin shell land
+# here as they are implemented — see README.md and ROADMAP.md.

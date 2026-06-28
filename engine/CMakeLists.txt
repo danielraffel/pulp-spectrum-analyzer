@@ -12,4 +12,10 @@ if(PULP_BUILD_TESTS)
     target_link_libraries(spectrum-diff-test PRIVATE Catch2::Catch2WithMain)
     target_include_directories(spectrum-diff-test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
     catch_discover_tests(spectrum-diff-test)
+
+    # Persistent UI state (pure; versioned (de)serializer with safe defaults).
+    add_executable(analyzer-state-test test_analyzer_state.cpp)
+    target_link_libraries(analyzer-state-test PRIVATE Catch2::Catch2WithMain)
+    target_include_directories(analyzer-state-test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+    catch_discover_tests(analyzer-state-test)
 endif()

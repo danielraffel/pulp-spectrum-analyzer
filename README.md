@@ -35,7 +35,9 @@ The cross-instance registry sits on top of layers 1–3.
 |---|---|
 | Layer 1 — `SpectrumEngine` (log-frequency magnitude in dB) | ✅ implemented, headless tests (`engine/test_spectrum_engine.cpp`) |
 | Layer 2 — `SpectrumDiff` (before/after boost/cut classification) | ✅ implemented, headless tests (`engine/test_spectrum_diff.cpp`) |
-| Layers 3–4 + plugin shell | 🚧 planned — see [ROADMAP.md](ROADMAP.md) |
+| Persistent state — `InspectorState` (name / sources / view mode) | ✅ implemented, headless round-trip + corrupt-fallback tests (`engine/test_analyzer_state.cpp`) |
+| Layer 4 (UI slice) — spectrum panel, **two screenshot baselines** (normal + diff) | ✅ implemented, Skia raster tests (`ui/test_analyzer_ui.cpp`, `ui/{normal,diff}-baseline.png`) |
+| Layer 3 (RT publication) + cross-instance registry + plugin shell | 🚧 planned — see [ROADMAP.md](ROADMAP.md) |
 | Cross-instance registry | 🚧 planned — in-process first; cross-process via IPC is a deliberate follow-up (see ROADMAP) |
 
 ## Attribution & clean-room policy
