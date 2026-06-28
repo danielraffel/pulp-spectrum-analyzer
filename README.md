@@ -43,13 +43,11 @@ The cross-instance registry sits on top of layers 1–3.
 
 ## Credits
 
-The cross-instance before/after spectral-diff idea is inspired by
-[truce-audio/truce-analyzer](https://github.com/truce-audio/truce-analyzer).
-See also [Pulp licensing](https://www.generouscorp.com/pulp/licensing.html).
+Inspired by truce-audio's [truce-analyzer](https://github.com/truce-audio/truce-analyzer).
 
 ## License
 
-MIT — see [LICENSE](LICENSE).
+MIT — see [LICENSE](LICENSE). See also [Pulp licensing](https://www.generouscorp.com/pulp/licensing.html).
 
 ## Building
 

@@ -1,6 +1,6 @@
 #pragma once
 
-// SpectrumEngine — clean-room log-frequency magnitude analysis (layer 1).
+// SpectrumEngine — log-frequency magnitude analysis (layer 1).
 //
 // This is the pure, headless-testable analysis layer of the Spectrum Analyzer.
 // It takes a window of mono samples and produces a log-frequency magnitude
