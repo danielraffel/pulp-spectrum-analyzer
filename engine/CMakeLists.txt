@@ -24,4 +24,10 @@ if(PULP_BUILD_TESTS)
     target_link_libraries(rt-publisher-test PRIVATE pulp::signal pulp::runtime Catch2::Catch2WithMain)
     target_include_directories(rt-publisher-test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
     catch_discover_tests(rt-publisher-test)
+
+    # Cross-instance registry (in-process discovery; pure, no Pulp libraries).
+    add_executable(registry-test test_registry.cpp)
+    target_link_libraries(registry-test PRIVATE Catch2::Catch2WithMain)
+    target_include_directories(registry-test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+    catch_discover_tests(registry-test)
 endif()

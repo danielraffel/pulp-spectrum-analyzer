@@ -43,14 +43,21 @@ Normal and Diff states (Skia backend, content-floor checked).
 
 Lets a later instance select an earlier instance as its comparison source.
 
-**Scope decision (load-bearing):** start **in-process** — a process-local
-registry of live instances, which is correct when the host keeps instances in one
-address space. AU/VST3/CLAP instances can be sandboxed into **separate
-processes**, so true cross-process comparison needs shared-memory IPC
-(`pulp::events::InterprocessConnection` / a shared-memory mirror). That is a
-deliberate follow-up, not a quick add; the in-process version ships first and
-documents the limitation. Standalone builds need `mute_preview_output`-style
-feedback avoidance so selecting a source can't create a mic→speaker loop.
+**In-process ✅ (done).** `engine/registry.hpp` — `InstanceRegistry` +
+`SpectrumSource` / RAII `RegisteredSpectrumSource`: instances register by NAME
+on construction and deregister on destruction (stale cleanup, no dangling
+pointers); another instance selects a source by name and reads its latest
+snapshot. Mutex-guarded control plane (never the audio thread). Headless tests
+(`engine/test_registry.cpp`): two instances compare by name, destroy-cleans-up,
+missing source reads unavailable, idempotent register.
+
+**Scope decision (load-bearing):** the in-process registry is correct when the
+host keeps instances in one address space. Sandboxed AU/VST3/CLAP instances can
+land in **separate processes**, so true cross-process comparison needs
+shared-memory IPC (`pulp::events::InterprocessConnection` / a shared-memory
+mirror) — a deliberate follow-up, not a quick add. Standalone builds also need
+`mute_preview_output`-style feedback avoidance so selecting a source can't create
+a mic→speaker loop.
 
 ## Shared engine with the in-tree Audio Inspector
 

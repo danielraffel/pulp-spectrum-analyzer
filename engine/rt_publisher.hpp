@@ -14,6 +14,7 @@
 // separate, larger layer — see ROADMAP.md.
 
 #include "spectrum_engine.hpp"
+#include "spectrum_snapshot.hpp"
 
 #include <pulp/runtime/spsc_queue.hpp>
 #include <pulp/runtime/triple_buffer.hpp>
@@ -25,12 +26,6 @@
 #include <vector>
 
 namespace pulp::analyzer {
-
-struct SpectrumSnapshot {
-    std::vector<float> bins_db;
-    std::uint64_t version = 0;   // increments each publish; UI detects freshness
-    double sample_rate = 0.0;
-};
 
 // FrameSize = samples per ring slot; RingCapacity = number of slots.
 template <int FrameSize = 256, std::size_t RingCapacity = 64>
