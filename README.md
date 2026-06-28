@@ -41,27 +41,15 @@ The cross-instance registry sits on top of layers 1–3.
 | Cross-instance registry + plugin shell | 🚧 planned — see [ROADMAP.md](ROADMAP.md) |
 | Cross-instance registry | 🚧 planned — in-process first; cross-process via IPC is a deliberate follow-up (see ROADMAP) |
 
-## Attribution & clean-room policy
+## Credits
 
-This is an **independent, clean-room** implementation. The DSP is standard
-windowed-FFT magnitude analysis from the public signal-processing literature; the
-cross-instance before/after comparison is a general, well-known analyzer idea.
-No third-party analyzer source code was read, transcribed, or ported — the
-implementation is built on Pulp's own primitives (`pulp::signal::Fft`, the
-lock-free `TripleBuffer`/`SpscQueue`, and the `SpectrumView`/`SpectrogramView`
-widgets). This mirrors
-[Pulp's own licensing and clean-room discipline](https://www.generouscorp.com/pulp/licensing.html):
-"we learned the shape; the implementation is independent."
-
-**Acknowledgement.** The cross-instance before/after spectral-diff idea was
-inspired by [truce-audio/truce-analyzer](https://github.com/truce-audio/truce-analyzer),
-which implements the same comparison concept on a different framework. We used it
-as inspiration for the *feature shape*, not as a code source — the analysis,
-diff, RT publication, and UI here are written independently on Pulp primitives.
+The cross-instance before/after spectral-diff idea is inspired by
+[truce-audio/truce-analyzer](https://github.com/truce-audio/truce-analyzer).
+See also [Pulp licensing](https://www.generouscorp.com/pulp/licensing.html).
 
 ## License
 
-MIT — see [LICENSE](LICENSE). No third-party analyzer code is bundled.
+MIT — see [LICENSE](LICENSE).
 
 ## Building
 
