@@ -11,11 +11,15 @@ peak-per-band folding. Headless tests in `engine/test_spectrum_engine.cpp`.
 Future refinement: a sharper constant-Q (sparse-kernel) analysis. The current
 contract ("log-frequency magnitude in dB") stays stable.
 
-## Layer 2 — Diff model
+## Layer 2 — Diff model ✅ (done)
 
-Compare two spectra into a boost/cut curve with a stable reference, plus
-Normal / Diff / Both view modes and a source overlay. Pure and headless-testable
-(deterministic input spectra → expected diff). No GUI dependency.
+`engine/spectrum_diff.hpp` — `diff_spectra(before, after, threshold)` returns a
+per-band delta (dB) plus a boost/cut/flat classification, and rejects
+empty/mismatched inputs. `ViewMode` (Normal / Diff / Both) models how the UI
+presents it. Pure and headless-tested (`engine/test_spectrum_diff.cpp`).
+
+Still to come on top of this: a stable reference capture and the source overlay
+wiring (those belong with the registry + UI layers below).
 
 ## Layer 3 — Realtime publication
 
