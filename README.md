@@ -53,6 +53,12 @@ widgets). This mirrors
 [Pulp's own licensing and clean-room discipline](https://www.generouscorp.com/pulp/licensing.html):
 "we learned the shape; the implementation is independent."
 
+**Acknowledgement.** The cross-instance before/after spectral-diff idea was
+inspired by [truce-audio/truce-analyzer](https://github.com/truce-audio/truce-analyzer),
+which implements the same comparison concept on a different framework. We used it
+as inspiration for the *feature shape*, not as a code source — the analysis,
+diff, RT publication, and UI here are written independently on Pulp primitives.
+
 ## License
 
 MIT — see [LICENSE](LICENSE). No third-party analyzer code is bundled.
