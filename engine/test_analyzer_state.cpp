@@ -41,6 +41,36 @@ TEST_CASE("InspectorState falls back to defaults on malformed input", "[state]")
     REQUIRE(r2.view_mode == ViewMode::normal);  // safe defaults
 }
 
+TEST_CASE("InspectorState is hardened against crafted blobs", "[state]") {
+    using S = InspectorState;
+    // magic "PSP1" little-endian = 0x31 0x50 0x53 0x50.
+
+    // Oversized declared string length (4 GiB) with no payload → defaults.
+    std::vector<uint8_t> oversized{0x31, 0x50, 0x53, 0x50, 1, 0, 0, 0,
+                                   0xFF, 0xFF, 0xFF, 0xFF};
+    REQUIRE_NOTHROW(S::deserialize(oversized));
+    REQUIRE(S::deserialize(oversized).instance_name.empty());
+
+    // Truncated string payload (claims 10 bytes, supplies 2) → defaults.
+    std::vector<uint8_t> truncated{0x31, 0x50, 0x53, 0x50, 1, 0, 0, 0,
+                                   10, 0, 0, 0, 'a', 'b'};
+    REQUIRE(S::deserialize(truncated).instance_name.empty());
+
+    // Absurd source count (1,000,000) → rejected, no huge allocation, no throw.
+    std::vector<uint8_t> bigcount{0x31, 0x50, 0x53, 0x50, 1, 0, 0, 0,
+                                  0, 0, 0, 0, 0x40, 0x42, 0x0F, 0x00};
+    REQUIRE_NOTHROW(S::deserialize(bigcount));
+    REQUIRE(S::deserialize(bigcount).selected_sources.empty());
+
+    // Invalid ViewMode value normalizes to normal.
+    S s;
+    s.instance_name = "x";
+    s.view_mode = ViewMode::diff;
+    auto blob = s.serialize();
+    blob[blob.size() - 4] = 99;  // corrupt the mode field
+    REQUIRE(S::deserialize(blob).view_mode == ViewMode::normal);
+}
+
 TEST_CASE("InspectorState tolerates trailing unknown bytes (forward compat)",
           "[state]") {
     InspectorState s;

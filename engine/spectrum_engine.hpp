@@ -38,6 +38,12 @@ class SpectrumEngine {
 public:
     void configure(const SpectrumConfig& cfg) {
         cfg_ = cfg;
+        // Validate/clamp the config so a bad value can't read out of bounds or
+        // divide by zero. The (fallback) FFT requires a power-of-two size >= 2.
+        if (cfg_.fft_size < 2) cfg_.fft_size = 2;
+        cfg_.fft_size = floor_pow2(cfg_.fft_size);
+        if (cfg_.log_bands < 1) cfg_.log_bands = 1;
+        if (!(cfg_.sample_rate > 0.0)) cfg_.sample_rate = 48000.0;
         fft_ = pulp::signal::Fft(cfg_.fft_size);
         window_.resize(cfg_.fft_size);
         // Hann window.
@@ -116,6 +122,12 @@ public:
 
 private:
     static constexpr float kPi = 3.14159265358979323846f;
+
+    static int floor_pow2(int n) {
+        int p = 1;
+        while (p * 2 <= n) p *= 2;
+        return p;
+    }
 
     SpectrumConfig cfg_;
     pulp::signal::Fft fft_{2048};

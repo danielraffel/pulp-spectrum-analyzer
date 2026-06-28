@@ -35,6 +35,8 @@ struct SpectrumSnapshot {
 // FrameSize = samples per ring slot; RingCapacity = number of slots.
 template <int FrameSize = 256, std::size_t RingCapacity = 64>
 class RtSpectrumPublisher {
+    static_assert(FrameSize > 0, "FrameSize must be > 0");
+
 public:
     using Frame = std::array<float, FrameSize>;
 
@@ -68,6 +70,7 @@ public:
     // is accumulated, run the FFT and publish a fresh snapshot. Returns the
     // number of snapshots published this call.
     int drain_and_analyze() {
+        if (fft_size_ <= 0 || window_.empty()) return 0;  // not configured yet
         int published = 0;
         while (auto frame = ring_.try_pop()) {
             for (float s : *frame) {

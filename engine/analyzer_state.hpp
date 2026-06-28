@@ -22,6 +22,9 @@ namespace pulp::analyzer {
 struct InspectorState {
     static constexpr uint32_t kMagic = 0x50535031;   // "PSP1"
     static constexpr uint32_t kSchemaVersion = 1;
+    // Caps so a crafted blob can't drive an unbounded allocation.
+    static constexpr uint32_t kMaxStringBytes = 64 * 1024;
+    static constexpr uint32_t kMaxSources = 4096;
 
     std::string instance_name;
     std::vector<std::string> selected_sources;  // remote source names
@@ -42,31 +45,41 @@ struct InspectorState {
         return out;
     }
 
-    // Returns defaults on any malformed/short/foreign input — never throws.
+    // Returns defaults on any malformed/short/foreign input — never throws
+    // (the try/catch backstops even a pathological std::bad_alloc).
     static InspectorState deserialize(const std::vector<uint8_t>& in) {
-        InspectorState s;
-        std::size_t p = 0;
-        uint32_t magic = 0, schema = 0;
-        if (!get_u32(in, p, magic) || magic != kMagic) return InspectorState{};
-        if (!get_u32(in, p, schema)) return InspectorState{};
-        // Future schema bumps are tolerated for the fields we know; unknown
-        // trailing data is ignored by simply not reading it.
-        if (!get_str(in, p, s.instance_name)) return InspectorState{};
-        uint32_t count = 0;
-        if (!get_u32(in, p, count)) return InspectorState{};
-        // Guard against an absurd count from a corrupt blob.
-        if (count > in.size()) return InspectorState{};
-        for (uint32_t i = 0; i < count; ++i) {
-            std::string name;
-            if (!get_str(in, p, name)) return InspectorState{};
-            s.selected_sources.push_back(std::move(name));
+        try {
+            InspectorState s;
+            std::size_t p = 0;
+            uint32_t magic = 0, schema = 0;
+            if (!get_u32(in, p, magic) || magic != kMagic) return InspectorState{};
+            if (!get_u32(in, p, schema)) return InspectorState{};
+            // Future schema bumps are tolerated for the fields we know; unknown
+            // trailing data is ignored by simply not reading it.
+            if (!get_str(in, p, s.instance_name)) return InspectorState{};
+            uint32_t count = 0;
+            if (!get_u32(in, p, count)) return InspectorState{};
+            // Each source needs at least its 4-byte length prefix, so a count
+            // that can't fit in the remaining bytes (or exceeds the cap) is
+            // corrupt — reject before reserving/looping.
+            if (count > kMaxSources || count > (in.size() - p) / 4) {
+                return InspectorState{};
+            }
+            s.selected_sources.reserve(count);
+            for (uint32_t i = 0; i < count; ++i) {
+                std::string name;
+                if (!get_str(in, p, name)) return InspectorState{};
+                s.selected_sources.push_back(std::move(name));
+            }
+            uint32_t mode = 0;
+            if (!get_u32(in, p, mode)) return InspectorState{};
+            s.view_mode = (mode <= static_cast<uint32_t>(ViewMode::both))
+                              ? static_cast<ViewMode>(mode)
+                              : ViewMode::normal;
+            return s;
+        } catch (...) {
+            return InspectorState{};
         }
-        uint32_t mode = 0;
-        if (!get_u32(in, p, mode)) return InspectorState{};
-        s.view_mode = (mode <= static_cast<uint32_t>(ViewMode::both))
-                          ? static_cast<ViewMode>(mode)
-                          : ViewMode::normal;
-        return s;
     }
 
 private:
@@ -80,8 +93,9 @@ private:
         put_u32(o, static_cast<uint32_t>(s.size()));
         o.insert(o.end(), s.begin(), s.end());
     }
+    // Subtraction-after-bounds idiom (never overflow p + needed on untrusted len).
     static bool get_u32(const std::vector<uint8_t>& in, std::size_t& p, uint32_t& v) {
-        if (p + 4 > in.size()) return false;
+        if (p > in.size() || in.size() - p < 4) return false;
         v = static_cast<uint32_t>(in[p]) |
             (static_cast<uint32_t>(in[p + 1]) << 8) |
             (static_cast<uint32_t>(in[p + 2]) << 16) |
@@ -92,7 +106,8 @@ private:
     static bool get_str(const std::vector<uint8_t>& in, std::size_t& p, std::string& s) {
         uint32_t len = 0;
         if (!get_u32(in, p, len)) return false;
-        if (p + len > in.size()) return false;
+        if (len > kMaxStringBytes) return false;            // cap allocation
+        if (p > in.size() || in.size() - p < len) return false;
         s.assign(in.begin() + p, in.begin() + p + len);
         p += len;
         return true;

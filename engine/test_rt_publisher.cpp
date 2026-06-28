@@ -59,14 +59,29 @@ TEST_CASE("RtSpectrumPublisher drops whole frames on ring overflow", "[rt]") {
     REQUIRE_NOTHROW(pub.drain_and_analyze());
 }
 
-TEST_CASE("RtSpectrumPublisher snapshot version advances with new windows",
+TEST_CASE("RtSpectrumPublisher snapshot version strictly advances per window",
           "[rt]") {
     RtSpectrumPublisher<256, 128> pub;
     pub.configure(cfg());
-    auto tone = sine(440.0f, 48000.0f, 2048 * 3);
+    auto tone = sine(440.0f, 48000.0f, 2048);  // exactly one FFT window
+
     for (int i = 0; i < (int)tone.size(); i += 256) pub.push_audio(tone.data() + i, 256);
     pub.drain_and_analyze();
-
     const auto v1 = pub.snapshot().version;
     REQUIRE(v1 >= 1);
+
+    // A second full window must publish a strictly newer snapshot.
+    for (int i = 0; i < (int)tone.size(); i += 256) pub.push_audio(tone.data() + i, 256);
+    pub.drain_and_analyze();
+    const auto v2 = pub.snapshot().version;
+    REQUIRE(v2 > v1);
+}
+
+TEST_CASE("RtSpectrumPublisher before configure() is safe (no publish)",
+          "[rt]") {
+    RtSpectrumPublisher<256, 16> pub;  // never configured
+    std::vector<float> block(256, 0.5f);
+    pub.push_audio(block.data(), 256);
+    REQUIRE(pub.drain_and_analyze() == 0);     // guarded, no window
+    REQUIRE(pub.snapshot().version == 0);
 }

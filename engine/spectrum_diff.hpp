@@ -9,6 +9,7 @@
 // produces a per-band delta plus a classification, with a view mode for how a
 // UI would present it. No FFT, no GPU, no IPC here — those are other layers.
 
+#include <cmath>
 #include <cstddef>
 #include <vector>
 
@@ -40,15 +41,20 @@ inline SpectrumDiffResult diff_spectra(const std::vector<float>& before,
     if (before.empty() || before.size() != after.size()) {
         return r; // valid stays false
     }
+    // A negative or NaN threshold is nonsensical (it would let a 0 dB delta
+    // classify as boost); normalize to a non-negative magnitude.
+    const float thr = std::isfinite(threshold_db) ? std::fabs(threshold_db) : 0.0f;
     const std::size_t n = before.size();
     r.delta_db.resize(n);
     r.classification.resize(n);
     for (std::size_t i = 0; i < n; ++i) {
         const float d = after[i] - before[i];
         r.delta_db[i] = d;
-        if (d > threshold_db) {
+        if (!std::isfinite(d)) {
+            r.classification[i] = BandChange::flat;  // NaN/Inf delta → no change
+        } else if (d > thr) {
             r.classification[i] = BandChange::boost;
-        } else if (d < -threshold_db) {
+        } else if (d < -thr) {
             r.classification[i] = BandChange::cut;
         } else {
             r.classification[i] = BandChange::flat;
