@@ -18,4 +18,10 @@ if(PULP_BUILD_TESTS)
     target_link_libraries(analyzer-state-test PRIVATE Catch2::Catch2WithMain)
     target_include_directories(analyzer-state-test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
     catch_discover_tests(analyzer-state-test)
+
+    # Layer 3 — lock-free RT publication (audio→worker→UI; FFT off the callback).
+    add_executable(rt-publisher-test test_rt_publisher.cpp)
+    target_link_libraries(rt-publisher-test PRIVATE pulp::signal pulp::runtime Catch2::Catch2WithMain)
+    target_include_directories(rt-publisher-test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+    catch_discover_tests(rt-publisher-test)
 endif()

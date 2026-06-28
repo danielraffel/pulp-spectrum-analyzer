@@ -21,14 +21,17 @@ presents it. Pure and headless-tested (`engine/test_spectrum_diff.cpp`).
 Still to come on top of this: a stable reference capture and the source overlay
 wiring (those belong with the registry + UI layers below).
 
-## Layer 3 — Realtime publication
+## Layer 3 — Realtime publication ✅ (done)
 
-Audio thread taps a bounded sample window into a lock-free ring
-(`pulp::runtime::SpscQueue`), a background worker drains it and runs Layer 1, and
-the latest spectrum is published via `pulp::runtime::TripleBuffer` for the UI.
+`engine/rt_publisher.hpp` — `RtSpectrumPublisher`: the audio thread copies
+samples into a bounded lock-free ring (`pulp::runtime::SpscQueue`, no alloc/lock/
+FFT); a worker drains it, runs Layer 1 OFF the callback, and publishes the latest
+spectrum via `pulp::runtime::TripleBuffer`; the UI reads the latest snapshot.
+Ring overflow drops whole frames (counted), never partial/torn data. Headless
+tests (`engine/test_rt_publisher.cpp`): spectrum-of-pushed-audio, overflow drops,
+version advances.
 
-**Hard RT rule:** the FFT runs on the worker, never in `process()`. `process()`
-does no allocation, no locks, no blocking; ring overflow drops whole frames.
+**Hard RT rule held:** the FFT runs on the worker, never in `push_audio()`.
 
 ## Layer 4 — UI
 
